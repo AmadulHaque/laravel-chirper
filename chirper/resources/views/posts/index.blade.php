@@ -9,7 +9,7 @@
                 <input type="file" name="image" class="" />
                 <x-primary-button class="mt-4">{{ __('Posts') }}</x-primary-button>
             </form>
-
+            <a href="{{route('sendOtp')}}" >Send OTP</a>
             <div class="mt-6  divide-y">
 
             @foreach ($posts as $post)
@@ -67,7 +67,7 @@
                 </div>
 
             @endforeach
-
+            {{$posts->links()}}
             </div>
         </div>
 

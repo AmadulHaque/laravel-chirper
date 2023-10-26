@@ -46,6 +46,7 @@ Route::middleware('auth')->group(function () {
 Route::resource('posts', PostController::class)
     ->only(['index', 'store', 'edit', 'update','destroy'])
     ->middleware(['auth', 'verified']);
+    Route::get('sendOtp', [PostController::class,'sendOtp'])->name('sendOtp');
 
 
 Route::controller(FacebookController::class)->group(function(){

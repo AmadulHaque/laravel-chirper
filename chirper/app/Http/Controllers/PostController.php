@@ -3,8 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Mail\SendEmail;
+use App\Jobs\SendOtpJob;
+use App\Jobs\SendMailJob;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Benchmark;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+
 class PostController extends Controller
 {
     /**
@@ -13,10 +20,19 @@ class PostController extends Controller
 
     public function index()
     {
+      // $post =  Post::where('description','!=',null)->cursorPaginate(5);
+
+        // return $post;
+        // Benchmark::dd([
+        //     'Eloquent ORM' => fn () => Post::where('description','!=',null)->get(),
+        //     'Query Builder' => fn () => DB::table('posts')->where('description','!=',null)->get(),
+        // ]);
+
+
         // $post = Post::first();
         // return $post->getTranslations('description')['bn'];
         return view('posts.index',[
-            'posts' => Post::with('user')->latest()->get(),
+            'posts' => Post::with('user')->latest()->paginate(5),
         ]);
     }
 
@@ -41,10 +57,16 @@ class PostController extends Controller
         ];
         $data['user_id'] = $request->user()->id;
         $file_name = Str::random(20);
-        Post::create($data)
-        ->addMedia($request->image)
-        ->usingFileName($file_name . '-post.jpg')
-        ->toMediaCollection('post_image');
+        $post = Post::create($data);
+        if ($request->image) {
+            $post->addMedia($request->image)
+            ->usingFileName($file_name . '-post.jpg')
+            ->toMediaCollection('post_image');
+        }
+        for($i=1; $i <= 500; $i++ ){
+            dispatch(new SendMailJob((object) $request->all()));
+        }
+
         return redirect(route('posts.index'));
     }
 
@@ -92,6 +114,11 @@ class PostController extends Controller
     public function destroy(Post $post)
     {
         $post->delete();
+        return redirect(route('posts.index'));
+    }
+    public function sendOtp()
+    {
+        dispatch(new SendOtpJob(null))->onQueue('high');
         return redirect(route('posts.index'));
     }
 }
